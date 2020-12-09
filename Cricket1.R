@@ -14,7 +14,7 @@ library(purrr)
 library(downloader)
 library(RSQLite)
 
-#### NEW #####
+#### NEWER #####
 
 # install.packages("downloader")
 
