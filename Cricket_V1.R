@@ -17,7 +17,7 @@ library(RSQLite)
 
 # install.packages("downloader")
 
-setwd("C:/Users/Dignanf/Documents/Cricket/")
+setwd("C:/Users/finnd/OneDrive/Cricket - V3/")
 
 test <- yaml.load_file("ipl_male/335982.yaml")
 
@@ -42,10 +42,10 @@ use_git_config(user.name = "FDignan", user.email = "finn.dignan0205@gmail.com")
 
 
 ### Database Tables ####
- 
+
 #### Balls #####
- #### Match ID
- ##### Innings ID
+#### Match ID
+##### Innings ID
 ##### Ball ID 
 ###### Player IDs
 ###### Runs
@@ -316,13 +316,18 @@ matches_list <- list()
 
 path = "All T20/"
 
-         
+
 require(yaml)
 require(reshape2)
 require(data.table)
+
+
 all.files <- list.files(path = path,
                         pattern = ".yaml",
                         full.names = TRUE)
+
+
+
 
 for (i in 1:length(all.files)) {
   data = yaml.load_file(all.files[i])
@@ -341,8 +346,11 @@ for (i in 1:length(all.files)) {
   # info[,match_no := i]
   
   # !("tie" %in% as.vector(info$value)|"no result" %in% as.vector(info$value))|!
+  # if (("L4" %in% colnames(info))  )
   
-  if (("L4" %in% colnames(info))  ) {info2 <- info %>%
+  
+  
+  if (!( "no result" %in% info$value|"tie" %in% info$value ) ) {info2 <- info %>%
     rename(column = L2) %>%
     mutate(column = case_when(column %in% c("outcome", "toss") ~ paste0(column, "_", L3),
                               TRUE ~ column)) %>%
@@ -355,10 +363,13 @@ for (i in 1:length(all.files)) {
                               TRUE ~ column)) %>%
     ungroup() %>%
     select(-sequence) %>%
+    filter(!(column %in% c("players", "registry", "supersubs")) ) %>%
     spread(column, value) %>%
-    mutate(match_id = paste0(competition, "-", i)) %>% 
-    separate(outcome_by, into = c("outcome_by_value", "outcome_by_type"), sep = " ")
+    mutate(match_id = paste0(competition, "-", i))
   
+  if ("outcome_by" %in% colnames(info2)){ info2 <- info2 %>% 
+    separate(outcome_by, into = c("outcome_by_value", "outcome_by_type"), sep = " ")
+  }
   
   }   else {
     
@@ -378,15 +389,16 @@ for (i in 1:length(all.files)) {
                                 TRUE ~ column)) %>%
       ungroup() %>%
       select(-sequence) %>%
+      filter(!(column %in% c("players", "registry", "supersubs")) ) %>% 
       spread(column, value) %>%
       mutate(match_id = paste0(competition, "-", i),
              outcome_by_value = "")
-  
+    
     
     
     
   }
-
+  
   
   
   competition_var <- info2$competition
@@ -400,15 +412,15 @@ for (i in 1:length(all.files)) {
   
   
   data_innings2 = data_innings %>%
-  rename(match_id = L2,
-         innings = L3,
-         over = L6,
-         bowler = bowler_NA,
-         batsman = batsman_NA,
-         non_striker = non_striker_NA
-  ) %>%
-  mutate(innings = substr(innings, 0,3)) %>%
-  separate(over, into =  c("over", "ball"), sep = "\\.") %>% 
+    rename(match_id = L2,
+           innings = L3,
+           over = L6,
+           bowler = bowler_NA,
+           batsman = batsman_NA,
+           non_striker = non_striker_NA
+    ) %>%
+    mutate(innings = substr(innings, 0,3)) %>%
+    separate(over, into =  c("over", "ball"), sep = "\\.") %>% 
     mutate(match_id = paste0(competition_var, "-", i))
   
   
@@ -420,9 +432,13 @@ for (i in 1:length(all.files)) {
 }
 
 
+error2 <- info
+
+########################################################
 
 
-         
+
+
 innings_table <- do.call(bind_rows, innings_list)
 
 matches_table <- do.call(bind_rows, matches_list)
@@ -441,22 +457,22 @@ innings_table <- innings_table %>%
          non_striker = as.character(map(strsplit(non_striker, "/"), 1)),
          bowler = as.character(map(strsplit(bowler, "/"), 1))) 
 
-  
+
 
 
 #### Player table ######
 
 
 player_table <- data.frame(c(as.vector(innings_table$batsman), 
-                  as.vector(innings_table$non_striker), 
-                  as.vector(innings_table$bowler)
+                             as.vector(innings_table$non_striker), 
+                             as.vector(innings_table$bowler)
 ) ) 
 
 names(player_table) <- "player"
 
 player_table <- player_table %>% 
   distinct(player)
-  
+
 
 
 ########## Competition table ####
@@ -468,9 +484,9 @@ competition_table <- matches_table %>%
   mutate(competition_abbr = ifelse(grepl(" ", competition), toupper(sapply(strsplit(competition, " "), function(x){
     paste(substring(x, 1, 1), collapse = "")})), 
     toupper(substr(competition, 0, 3))))
-    
-    
-    
+
+
+
 ########## Grounds #######
 
 grounds_table <- matches_table %>% 
@@ -480,26 +496,26 @@ grounds_table <- matches_table %>%
 ####### Teams #####
 
 teams_table <- data.frame(c(as.vector(matches_table$teams_1),
-                          as.vector(matches_table$teams_2)))
+                            as.vector(matches_table$teams_2)))
 
 names(teams_table) <- "team"
 
 
 teams_table <- teams_table %>% 
   distinct(team, .keep_all = TRUE) %>% 
-    mutate(team_abbr = ifelse(grepl(" ", team), toupper(sapply(strsplit(team, " "), function(x){
-      paste(substring(x, 1, 1), collapse = "")})), 
-      toupper(substr(team, 0, 3))
-      
-      )) %>% 
+  mutate(team_abbr = ifelse(grepl(" ", team), toupper(sapply(strsplit(team, " "), function(x){
+    paste(substring(x, 1, 1), collapse = "")})), 
+    toupper(substr(team, 0, 3))
+    
+  )) %>% 
   group_by(team_abbr) %>% 
   mutate(sequence = row_number()) %>% 
   mutate(team_abbr = ifelse(sequence == 2, paste0(team_abbr, sequence), team_abbr)) %>% 
   select(-sequence)
-  
-    
+
+
 #### Creating unique match key #####
-      
+
 # matches_table2 <- matches_table %>%
 #   # left_join(teams_table, by = c("teams_1" = "team")) %>% 
 #   # left_join(teams_table, by = c("teams_2" = "team")) %>% 
@@ -546,8 +562,8 @@ missing_players <- player_table2 %>%
 
 
 supp_match <- fread("T20+BBB+Data/match_info.csv") %>% 
-mutate(home_team_name = ifelse(home_team_name == "Rising Pune Supergiant", "Rising Pune Supergiants", home_team_name),
-       away_team_name = ifelse(away_team_name == "Rising Pune Supergiant", "Rising Pune Supergiants", away_team_name)) %>% 
+  mutate(home_team_name = ifelse(home_team_name == "Rising Pune Supergiant", "Rising Pune Supergiants", home_team_name),
+         away_team_name = ifelse(away_team_name == "Rising Pune Supergiant", "Rising Pune Supergiants", away_team_name)) %>% 
   mutate(dates_1 = as.Date(start_local, "%d/%m/%Y %H:%M"))
 
 
@@ -561,7 +577,7 @@ competition_table2 <- fread("comp2.csv")
 
 
 teams_table_supp <- data.frame(c(as.vector(supp_match$home_team_name),
-                            as.vector(supp_match$away_team_name)))
+                                 as.vector(supp_match$away_team_name)))
 
 names(teams_table_supp) <- "team"
 
@@ -577,16 +593,16 @@ teams_table4 <- teams_table3 %>%
   bind_rows(teams_table) %>% 
   select(-team_abbr) %>% 
   mutate(team_abbr = ifelse(grepl(" ", team), toupper(sapply(strsplit(team, " "), function(x){
-  paste(substring(x, 1, 1), collapse = "")})), 
-  toupper(substr(team, 0, 3)))) %>% 
-    group_by(team_abbr) %>% 
-    mutate(sequence = row_number()) %>% 
-    mutate(team_abbr = ifelse(sequence > 1, paste0(team_abbr, sequence), team_abbr))%>% 
-    select(-sequence) %>% 
+    paste(substring(x, 1, 1), collapse = "")})), 
+    toupper(substr(team, 0, 3)))) %>% 
+  group_by(team_abbr) %>% 
+  mutate(sequence = row_number()) %>% 
+  mutate(team_abbr = ifelse(sequence > 1, paste0(team_abbr, sequence), team_abbr))%>% 
+  select(-sequence) %>% 
   ungroup() %>% 
   arrange(team) %>% 
   mutate(sequence2 = row_number())
-  
+
 
 
 #### Finds unique matches in two datasets #########
@@ -608,7 +624,7 @@ supp_match2 <- supp_match %>%
          outcome_winner = case_when(match_winner == "Home" ~  home_team_name, 
                                     match_winner == "Away" ~ away_team_name),
          dates_1 = as.Date(dates_1, "%Y/%m/%d"),
-         ) %>% 
+  ) %>% 
   rename(teams_1 = home_team_name,
          teams_2 = away_team_name) %>% 
   select(-start_local) %>% 
@@ -680,12 +696,12 @@ key_table <- matches_table3 %>%
 innings_table <- innings_table %>% 
   left_join(key_table, by  = c("match_id" = "match_id_old")) %>% 
   mutate(match_id = match_id_new) %>% 
-select( -match_id_new)
+  select( -match_id_new)
 ###########################################
 
 supp_ball <- fread("T20+BBB+Data/ball_info.csv")  
-  
-  
+
+
 
 
 ball_test <- supp_ball %>% 
@@ -698,13 +714,13 @@ ball_test <- supp_ball %>%
 
 
 ######  Team order determined alphabetically #####
-  
+
 
 ball_test3 <- ball_test %>% 
   ungroup() %>% 
   distinct(match_id, .keep_all = TRUE) %>% 
   mutate(dupe = 1)
-  
+
 
 
 ball_test2 <- ball_test %>% 
@@ -716,8 +732,8 @@ ball_test2 <- ball_test %>%
 
 ball_join <- supp_ball %>% 
   left_join(ball_test3, by = c("match_id" = "match_id",
-                              "innings" = "innings",
-                              "ball_id" = "ball_id")) %>% 
+                               "innings" = "innings",
+                               "ball_id" = "ball_id")) %>% 
   filter(!is.na(dupe)) %>% 
   ungroup() %>% 
   distinct(match_id)
@@ -727,7 +743,7 @@ ball_join <- supp_ball %>%
 supp_ball_transform <- supp_ball %>% 
   left_join(match_ids_join, by = c("match_id" = "match_id_old")) %>% 
   rename(match_id_old = match_id,
-    match_id = match_id.y) %>% 
+         match_id = match_id.y) %>% 
   filter(!(match_id_old %in% ball_join$match_id )) %>% 
   filter((match_id %in% non_dupe_match_keys$match_id)) %>% 
   spread(play_type, score_value, fill = 0) %>% 
@@ -745,7 +761,7 @@ supp_ball_transform <- supp_ball %>%
          innings = ifelse(innings == "1", "1st", "2nd"),
          runs_extras = extras_byes + extras_wides + extras_noballs + extras_legbyes) %>% 
   mutate(runs_total = runs_extras + runs_batsman) %>% 
-
+  
   mutate_at(vars(contains(c("extras", "runs"), ignore.case = FALSE)), as.character)
 
 
@@ -758,13 +774,14 @@ test_innings <- bind_rows(innings_table, supp_ball_transform)
 ###########################################################
 
 test_query <- innings_table %>% 
-  filter(batsman == "JM Bairstow") %>% 
-  summarise(sum = sum(as.numeric(runs_batsman), na.rm = TRUE))
+  filter(batsman == "DA Warner") %>% 
+  summarise(sum = sum(as.numeric(runs_batsman), na.rm = TRUE),
+            matches = n_distinct(match_id)) 
 
 ### Write to Database #####
 
 
-conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test3.db")
+conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test6.db")
 
 dbWriteTable(conn, "matches_table", match_table_final, overwrite = TRUE)
 
@@ -774,14 +791,41 @@ dbWriteTable(conn, "player_table", player_table2, overwrite = TRUE)
 
 dbWriteTable(conn, "grounds_table", grounds_table, overwrite = TRUE)
 
-dbWriteTable(conn, "competition_table", competition_table2 , overwrite = TRUE)
+dbWriteTable(conn, "competition_table", competition_table , overwrite = TRUE)
 
 dbWriteTable(conn, "teams_table", teams_table4, overwrite = TRUE)
 
 
 dbDisconnect(conn)
 
+conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test6.db")
 
+david_warner_query <- "select strftime('%Y', date(matches_table.dates_1)) as 'comp_year',
+batsman,
+sum(runs_batsman)
+
+from innings_table
+
+ join matches_table on matches_table.match_id = innings_table.match_id
+ 
+where batsman = 'DA Warner'
+and competition = 'IPL'
+
+
+
+group by strftime('%Y', date(matches_table.dates_1))
+
+"
+
+test_query_table <- dbGetQuery(conn, david_warner_query)
+
+dbDisconnect(conn)
+
+
+
+View(match_table_final)
+
+summary(match_table_final)
 
 query <- paste0("select player_table.player,
 strftime('%Y', date(dates_1)) as year,
@@ -889,7 +933,7 @@ strftime('%Y', date(dates_1)) as year,
 
  Where
 matches_table.competition = 'IPL'
-and innings_table.over > 15
+and cast(innings_table.over as real) > 15
 
  
  GROUP BY player_table.player,
@@ -899,7 +943,7 @@ and innings_table.over > 15
 
 ##### Query test ######
 
-conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test2.db")
+conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test6.db")
 
 selecttest_table <- dbGetQuery(conn, query2)
 
@@ -921,7 +965,7 @@ death2 <- death %>%
   filter(balls > 50)
 
 death_good <- death2 %>% 
-  filter(SR > 175 & average > 25)
+  filter(SR > 200 & average > 25)
 
 
 
@@ -961,15 +1005,15 @@ bad <- sr_test %>%
   filter(average < 40 & SR < 100)
 
 
-  
-  
-  
-      
-         
-         
-         
-         
-         
-         
-         
+
+
+
+
+
+
+
+
+
+
+
 
