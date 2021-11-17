@@ -13,26 +13,10 @@ library(reshape2)
 library(purrr)
 library(downloader)
 library(RSQLite)
-
-
-# install.packages("downloader")
-
-setwd("C:/Users/finnd/OneDrive/Cricket - V3/")
-
-test <- yaml.load_file("ipl_male/335982.yaml")
+library(janitor)
 
 
 
-temp <- tempfile()
-
-
-wd <- getwd()
-
-download.file("https://cricsheet.org/downloads/recently_added_7_male.zip", temp)
-
-unzip(temp, exdir = paste0(wd, "/test"))
-
-unlink(temp)
 
 
 # install.packages("usethis")
@@ -40,268 +24,24 @@ unlink(temp)
 library(usethis)
 use_git_config(user.name = "FDignan", user.email = "finn.dignan0205@gmail.com")
 
+###########################################
+###### Unzip and move files ###################
 
-### Database Tables ####
+setwd("C:/Users/fdignan/OneDrive - Imperial College London/Temp/All T20/")
 
-#### Balls #####
-#### Match ID
-##### Innings ID
-##### Ball ID 
-###### Player IDs
-###### Runs
-###### Extras 
-###### Wicket
-###### Fielder
-###### Method
+t20_files <- list.files(pattern = "*.zip")
+
+mapply(unzip, t20_files,  exdir = "yaml" )
 
 
-###### Matches ####
-###### Date
-###### Match ID 
-###### Series ID
-###### Umpires
-###### Ground
-###### Players ID
-##### Outcome
-##### Teams ID
-###### Toss
-##### Overs
-##### Scores
+##########################################
 
 
 
-###### Players ####
-###### Handed
-###### DOB 
-###### Country
+###################################################################################
+############ Unpacks YAML files and organises into tabular form ##################
+###################################################################################
 
-
-###### Series 
-
-
-###### Grounds
-
-
-##### Teams ##
-
-# x = melt(test)
-# y = data.frame(x)
-# 
-# 
-# meta = y[y$L1 == 'meta',]
-# meta = meta[, colSums(is.na(meta)) != nrow(meta)]
-# data_meta = reshape(meta,direction = 'wide',timevar = 'L2',idvar = 'L1')
-# 
-# 
-# 
-# 
-# data_innings = y[(y$L1 == 'innings') & (y$L4 == 'deliveries'),]
-# data_innings$new = paste(data_innings$L7,data_innings$L8,sep="_")
-# data_innings = subset(data_innings, select=-c(L7,L8,L4,L1,L5))
-# data_innings = reshape(data_innings,idvar=c('L2','L3','L6'),direction = "wide",timevar = c('new'))
-# # write.csv(data_innings,"data_innings.csv",row.names = F)
-# 
-# info = y[y$L1 == 'info',]
-# info = info[, colSums(is.na(info)) != nrow(info)]
-# info = subset(data_innings, select=-c(L1))
-
-
-
-
-
-
-
-
-
-
-######### Second attempt ########
-
-# data_innings_full = data.frame(matrix(ncol=0,nrow=0))
-# matches_full = data.frame(matrix(ncol=0,nrow=0))
-# datalist = list()
-# 
-# path <- "ipl_male/"
-# path2 <- "Cricsheet_CSVs/"
-# 
-# aggr_fielder <- function(x) {
-#   paste0(x, collapse="/")
-# }
-# 
-# convertCricsheetData <- function(source){
-#   require(yaml)
-#   require(reshape2)
-#   require(data.table)
-#   all.files <- list.files(path = source,
-#                           pattern = ".yaml",
-#                           full.names = TRUE)
-#   
-#   for (i in 1:length(all.files)) {
-#     data = yaml.load_file(all.files[i])
-#     x = melt(data)
-#     y = data.table(x)
-#     
-#     meta = y[y$L1 == 'meta',]
-#     meta = meta[, colSums(is.na(meta)) != nrow(meta), with=FALSE]
-#     data_meta = reshape(meta,direction = 'wide',timevar = 'L2',idvar = 'L1')
-#     
-#     info = y[y$L1 == 'info',]
-#     info = info[, colSums(is.na(info)) != nrow(info), with=FALSE]
-#     info[, L1 := NULL]
-#     # info[,match_no := i]
-#     
-#     data_innings = y[(y$L1 == 'innings') & (y$L4 == 'deliveries'),]
-#     data_innings[, new := paste(data_innings$L7,data_innings$L8,sep="_")]
-#     data_innings [, c("L7","L8","L4","L1","L5") := NULL]
-#     data_innings = dcast(data_innings, L2+L3+L6 ~ new, fun.aggregate = aggr_fielder,fill = "") 
-#     
-#     
-#     ### Formats tables - binds together #######
-#     
-# 
-#     
-#     
-#     # info2 <- info %>% 
-#     #   rename(column = L2) %>% 
-#     #   mutate(column = case_when(column %in% c("outcome", "toss") ~ paste0(column, "_", L3),
-#     #                             TRUE ~ column)) %>% 
-#     #   mutate(value = case_when(column == "outcome_by" ~ paste0(value, " ", L4),
-#     #                            TRUE ~ value)) %>% 
-#     #   select(value, column) %>% 
-#     #   group_by(column) %>% 
-#     #   mutate(sequence = row_number()) %>% 
-#     #   mutate(column = case_when(column %in% c("teams", "umpires") ~ paste0(column, "_", sequence),
-#     #                             TRUE ~ column)) %>% 
-#     #   ungroup() %>%
-#     #   select(-sequence) %>% 
-#     #   spread(column, value) %>%
-#     #   separate(outcome_by, into = c("outcome_by_value", "outcome_by_type"), sep = " ") %>% 
-#     #   mutate(match_id = paste(competition, "_", i))
-#     # 
-#     # 
-#     # competition_var <- info$competition
-#     
-# 
-#       # data_innings2 = data_innings %>% 
-#       # rename(match_id = L2,
-#       #        innings = L3,
-#       #        over = L6,
-#       #        bowler = bowler_NA,
-#       #        batsman = batsman_NA,
-#       #        non_striker = non_striker_NA
-#       # ) %>% 
-#       # mutate(innings = substr(innings, 0,3)) %>% 
-#       # separate(over, into =  c("over", "ball"), sep = "\\.") 
-#       # 
-#     # %>% 
-#     #   mutate(match_id = paste(competition_var, "_", i))
-#        
-#        
-#        
-#     # matches_full <- bind_rows(matches_full, info2, .id = NULL)
-#     
-#     # data_innings_full <- bind_rows(data_innings_full, data_innings2, .id = NULL)
-#     
-#     
-#     datalist[[i]] <- data_innings
-#     
-#     
-#     # data_innings[,match_no := i]
-#     # write.csv(data_innings,paste0(destination,paste(c(info[info$L2 == "dates",]$value,info[info$L2 == "teams",]$value), collapse = "-"),".csv"),row.names = F)
-#     # write.csv(info,paste0(destination,paste(c("info",info[info$L2 == "dates",]$value,info[info$L2 == "teams",]$value), collapse = "-"),".csv"),row.names = F)
-#   
-#   }
-# }
-# 
-# 
-# convertCricsheetData(path)
-# 
-# 
-# 
-# remove(data_innings)
-# remove(info)
-# 
-# remove(data_innings2)
-# 
-# 
-# 
-# y = data.table(x)
-# meta = y[y$L1 == 'meta',]
-# meta = meta[, colSums(is.na(meta)) != nrow(meta), with=FALSE]
-# data_meta = reshape(meta,direction = 'wide',timevar = 'L2',idvar = 'L1')
-# 
-# info = y[y$L1 == 'info',]
-# info = info[, colSums(is.na(info)) != nrow(info), with=FALSE]
-# info[, L1 := NULL]
-# info[,match_no := 1]
-# 
-# data_innings = y[(y$L1 == 'innings') & (y$L4 == 'deliveries'),]
-# data_innings[, new := paste(data_innings$L7,data_innings$L8,sep="_")]
-# data_innings [, c("L7","L8","L4","L1","L5") := NULL]
-# data_innings = dcast(data_innings, L2+L3+L6 ~ new, fun.aggregate = aggr_fielder,fill = "")
-# 
-# 
-# 
-# 
-# data_innings2 <- data_innings %>% 
-#   rename(match_id = L2,
-#          innings = L3,
-#          over = L6,
-#          bowler = bowler_NA,
-#          batsman = batsman_NA,
-#          non_striker = non_striker_NA
-#          ) %>% 
-# mutate(innings = substr(innings, 0,3)) %>% 
-#  separate(over, into =  c("over", "ball"), sep = "\\.")
-# 
-# 
-# 
-# info2 <- info %>% 
-#   rename(column = L2) %>% 
-#   mutate(column = case_when(column %in% c("outcome", "toss") ~ paste0(column, "_", L3),
-#                                                         TRUE ~ column)) %>% 
-#   mutate(value = ifelse(column == "outcome_by", paste0(value, " ", L4), value)) %>% 
-#   select(value, column) %>% 
-#   group_by(column) %>% 
-#   mutate(sequence = row_number()) %>% 
-#   mutate(column = case_when(column %in% c("teams", "umpires") ~ paste0(column, "_", sequence),
-#                            TRUE ~ column)) %>% 
-#   ungroup() %>%
-#   select(-sequence) %>% 
-#   spread(column, value) %>%
-#   separate(outcome_by, into = c("outcome_by_value", "outcome_by_type"), " ") %>% 
-#   mutate(match_id = paste(competition, "_", i))
-# 
-# 
-# 
-# 
-# info2 <- info %>% 
-#   rename(column = L2) %>% 
-#   mutate(column = case_when(column %in% c("outcome", "toss") ~ paste0(column, "_", L3),
-#                             TRUE ~ column)) %>% 
-#   mutate(value = case_when(column == "outcome_by" ~  paste0(value, " ", L4),
-#                            TRUE ~ value)) %>% 
-#   select(value, column) %>% 
-#   group_by(column) %>% 
-#   mutate(sequence = row_number()) %>% 
-#   mutate(column = case_when(column %in% c("teams", "umpires") ~ paste0(column, "_", sequence),
-#                             TRUE ~ column)) %>% 
-#   ungroup() %>%
-#   select(-sequence) %>% 
-#   spread(column, value) %>%
-#   separate(outcome_by, into = c("outcome_by_value", "outcome_by_type"), " ") 
-#   
-# 
-# 
-# 
-# matches_full2 <- rbind(matches_full, info2)
-
-######################
-#######################
-
-remove(x)
-remove(y)
-remove(data_innings)
-remove(info)
 
 aggr_fielder <- function(x) {
   paste0(x, collapse="/")
@@ -312,9 +52,10 @@ aggr_fielder <- function(x) {
 
 innings_list <- list()
 matches_list <- list()
+players_list <- list()
 
 
-path = "All T20/"
+path = "yaml/"
 
 
 require(yaml)
@@ -335,6 +76,8 @@ for (i in 1:length(all.files)) {
   y = data.table(x)
   
   
+     if ( "bowl_out" %in% y$L2 ) next 
+
   
   meta = y[y$L1 == 'meta',]
   meta = meta[, colSums(is.na(meta)) != nrow(meta), with=FALSE]
@@ -343,11 +86,9 @@ for (i in 1:length(all.files)) {
   info = y[y$L1 == 'info',]
   info = info[, colSums(is.na(info)) != nrow(info), with=FALSE]
   info[, L1 := NULL]
-  # info[,match_no := i]
-  
-  # !("tie" %in% as.vector(info$value)|"no result" %in% as.vector(info$value))|!
-  # if (("L4" %in% colnames(info))  )
-  
+
+ 
+  ######## Code if not a tie or NR ##############
   
   
   if (!( "no result" %in% info$value|"tie" %in% info$value ) ) {info2 <- info %>%
@@ -364,12 +105,28 @@ for (i in 1:length(all.files)) {
     ungroup() %>%
     select(-sequence) %>%
     filter(!(column %in% c("players", "registry", "supersubs")) ) %>%
-    spread(column, value) %>%
+    spread(column, value)
+    
+    
+    ##### International Competition ######
+    
+    if ("competition" %in% colnames(info2)){ info2 <- info2 %>%
+    
     mutate(match_id = paste0(competition, "-", i))
+    } else {
+      
+      info2 <- info2 %>%
+        
+        mutate(match_id = paste0("International", "-", i))
+      
+    }
+  
+  ##### Error if Outcome_by does not exist ######
   
   if ("outcome_by" %in% colnames(info2)){ info2 <- info2 %>% 
     separate(outcome_by, into = c("outcome_by_value", "outcome_by_type"), sep = " ")
   }
+  
   
   }   else {
     
@@ -391,8 +148,22 @@ for (i in 1:length(all.files)) {
       select(-sequence) %>%
       filter(!(column %in% c("players", "registry", "supersubs")) ) %>% 
       spread(column, value) %>%
-      mutate(match_id = paste0(competition, "-", i),
+            
+      mutate(
              outcome_by_value = "")
+    
+      if ("competition" %in% colnames(info2)){ info2 <- info2 %>%
+        
+        mutate(match_id = paste0(competition, "-", i))
+      } else {
+        
+        info2 <- info2 %>%
+          
+          mutate(match_id = paste0("International", "-", i))
+        
+      }
+      
+
     
     
     
@@ -400,8 +171,14 @@ for (i in 1:length(all.files)) {
   }
   
   
+
   
-  competition_var <- info2$competition
+ if("competition" %in% colnames(info2))
+  { competition_var <- info2$competition
+  } else {
+    competition_var <- "International"  
+    
+    }
   
   
   data_innings = y[(y$L1 == 'innings') & (y$L4 == 'deliveries'),]
@@ -424,6 +201,22 @@ for (i in 1:length(all.files)) {
     mutate(match_id = paste0(competition_var, "-", i))
   
   
+  
+  if ("players" %in% info$L2) {
+    
+    players <- info %>% 
+      filter(L2 == "players") %>% 
+      select(value, L3) %>% 
+      mutate(match_id = paste0(competition_var, "-", i))
+    
+  }
+  
+  
+  
+  
+  
+  players_list[[i]] <- players
+  
   innings_list[[i]] <- data_innings2
   
   matches_list[[i]] <- info2
@@ -432,7 +225,7 @@ for (i in 1:length(all.files)) {
 }
 
 
-error2 <- info
+
 
 ########################################################
 
@@ -443,14 +236,19 @@ innings_table <- do.call(bind_rows, innings_list)
 
 matches_table <- do.call(bind_rows, matches_list)
 
+players_table <- do.call(bind_rows, players_list)
+
+
+setwd("C:/Users/fdignan/OneDrive - Imperial College London/Temp/")
+
+###### Amalgamates competitions and team names ######
 
 matches_table <- matches_table %>% 
   mutate(teams_1 = ifelse(teams_1 == "Rising Pune Supergiant", "Rising Pune Supergiants", teams_1),
          teams_2 = ifelse(teams_2 == "Rising Pune Supergiant", "Rising Pune Supergiants", teams_2)) %>% 
-  mutate(competition = ifelse(competition %in% c("NatWest T20 Blast", "Vitality Blast"), "English T20", competition))
-
-
-
+  mutate(competition = case_when(competition %in% c("NatWest T20 Blast", "Vitality Blast") ~ "English T20",
+                                 is.na(competition) ~ "International", 
+                                 TRUE ~ competition)) 
 
 innings_table <- innings_table %>% 
   mutate(batsman = as.character(map(strsplit(batsman, "/"), 1)),
@@ -473,10 +271,77 @@ names(player_table) <- "player"
 player_table <- player_table %>% 
   distinct(player)
 
+######################################
+######### Players Tables ###########
+######################################
 
 
+match_lineup_table <- players_table %>% 
+  rename("player" = "value") 
+
+base_player_table <- match_lineup_table %>% 
+  distinct(player)
+
+
+#### Cricsheet data #####
+
+setwd("Cricket_V1/")
+
+cricsheet_player_table <- fread("people_cricsheet.csv")
+
+base_player_table2 <- base_player_table %>% 
+  left_join(cricsheet_player_table, by = c("player" = "unique_name")) %>% 
+  select(player, identifier, key_cricinfo)
+
+### Cricinfo scraped #####
+
+cricinfo_player_database <- fread("SuperCleaned.csv") %>% 
+  clean_names() %>% 
+  select(id, name, country, full_name, birthdate, birthplace, major_teams, batting_style, bowling_style)
+
+
+
+########## Supplemantary player data #########
+#### Players #####
+
+setwd("All T20/")
+
+lineups <- fread("T20+BBB+Data/team_lineups.csv") %>% 
+  distinct(player_id, .keep_all = TRUE) %>% 
+  select(player_id, player_name)
+
+supp_players <- lineups %>% 
+  filter(!(player_id %in% base_player_table2$key_cricinfo)) %>% 
+  rename("player" = "player_name",
+         "key_cricinfo" = "player_id")
+
+
+########################################################
+########### Final Player Table ##########################
+#######################################################
+
+base_player_table3 <- base_player_table2 %>% 
+  bind_rows(supp_players) %>% 
+  left_join(cricinfo_player_database, by = c("key_cricinfo" = "id")) %>% 
+  mutate(bowling_style = gsub(",.*", "", bowling_style)) %>% 
+  mutate(rolled_up_bowl_type = case_when(grepl("Legbreak", bowling_style) ~ "Legbreak",
+                               grepl("Offbreak|offbreak",bowling_style) ~ "Offbreak",
+                               bowling_style == "Right-arm fast" ~ "Right-arm fast",
+                               bowling_style == "Left-arm fast" ~ "Left-arm fast",
+                               bowling_style %in% c("Left-arm fast-medium", "Left-arm medium", "Left-arm medium-fast") ~ "Left-arm medium",
+                               bowling_style %in% c("Right-arm fast-medium", "Right-arm medium", "Right-arm medium-fast") ~ "Right-arm medium",
+                               bowling_style == "Slow left-arm orthodox" ~ "SLA",
+                               bowling_style == "Slow left-arm chinaman" ~ "Chinaman",
+                               TRUE ~ bowling_style
+  ))
+
+
+
+##################################
 ########## Competition table ####
+###################################
 
+setwd("Cricket_V1/")
 
 
 competition_table <- matches_table %>% 
@@ -486,19 +351,27 @@ competition_table <- matches_table %>%
     toupper(substr(competition, 0, 3))))
 
 
-
+###########################
 ########## Grounds #######
+############################
+
 
 grounds_table <- matches_table %>% 
   select(venue, city) %>% 
-  distinct(venue, .keep_all = TRUE)
+  distinct(venue, .keep_all = TRUE) %>% 
+  mutate(city = ifelse(is.na(city), gsub("\\s.*", "", venue), city))
 
+####################
 ####### Teams #####
+####################
 
 teams_table <- data.frame(c(as.vector(matches_table$teams_1),
                             as.vector(matches_table$teams_2)))
 
 names(teams_table) <- "team"
+
+
+########################################
 
 
 teams_table <- teams_table %>% 
@@ -514,51 +387,10 @@ teams_table <- teams_table %>%
   select(-sequence)
 
 
-#### Creating unique match key #####
-
-# matches_table2 <- matches_table %>%
-#   # left_join(teams_table, by = c("teams_1" = "team")) %>% 
-#   # left_join(teams_table, by = c("teams_2" = "team")) %>% 
-#   left_join(competition_table, by = c("competition" = "competition")) %>% 
-#   # mutate(match_id2 = paste0(competition_abbr, team_abbr.x, team_abbr.y, format(as.Date(dates_1), "%Y%m%d")))
-# 
-# 
-# 
-# 
-# matches_table <- matches_table2 %>% 
-#   mutate(match_id = match_id2) %>% 
-#   select(-match_id2)
-
-
-##############################
-
-######### Supplementary Data #######
-#### Players #####
-
-lineups <- fread("T20+BBB+Data/team_lineups.csv") %>% 
-  distinct(player_id, .keep_all = TRUE) %>% 
-  select(player_id, player_name)
-
-supp_player <- fread("T20+BBB+Data/player_info.csv") %>% 
-  left_join(lineups, by = c("player_id" = "player_id"))
-
-
-player_table2 <- player_table %>% 
-  left_join(supp_player, by = c("player" = "player_name"))
-
-
-
-missing_players <- player_table2 %>% 
-  filter(is.na(player_id)) %>% 
-  select(player, names) %>% 
-  left_join(supp_player, by = c("player" = "names")) %>% 
-  filter(!is.na(player_id))
-
-
-
 #########################################
-
-
+######### Supplementary Data #######
+#############################################
+##############################
 
 
 supp_match <- fread("T20+BBB+Data/match_info.csv") %>% 
@@ -567,8 +399,8 @@ supp_match <- fread("T20+BBB+Data/match_info.csv") %>%
   mutate(dates_1 = as.Date(start_local, "%d/%m/%Y %H:%M"))
 
 
-test6 <- supp_match %>% 
-  filter(is.na(home_team_name))
+##############################################
+############ Competition Lookup Table #####
 
 
 competition_table2 <- fread("comp2.csv")
@@ -589,7 +421,6 @@ teams_table3 <- teams_table_supp %>%
 
 
 teams_table4 <- teams_table3 %>% 
-  # rename(team = home_team_name) %>% 
   bind_rows(teams_table) %>% 
   select(-team_abbr) %>% 
   mutate(team_abbr = ifelse(grepl(" ", team), toupper(sapply(strsplit(team, " "), function(x){
@@ -649,10 +480,7 @@ matches_table3 <- matches_table %>%
 
 
 
-
-
-
-
+#########################################################
 
 
 match_ids_join <- supp_match2 %>%
@@ -677,6 +505,7 @@ non_dupe_match_keys2 <- combi_match %>%
   select(match_id) %>% 
   mutate(dupe = 1)
 
+
 supp_match_join <- supp_match2 %>% 
   filter((match_id %in% as.vector(non_dupe_match_keys2$match_id)))
 
@@ -697,46 +526,11 @@ innings_table <- innings_table %>%
   left_join(key_table, by  = c("match_id" = "match_id_old")) %>% 
   mutate(match_id = match_id_new) %>% 
   select( -match_id_new)
+
 ###########################################
 
 supp_ball <- fread("T20+BBB+Data/ball_info.csv")  
 
-
-
-
-ball_test <- supp_ball %>% 
-  # left_join(non_dupe_match_keys) %>% 
-  # filter(!is.na(match_id2)) %>% 
-  group_by(match_id, innings, ball_id) %>% 
-  mutate(seq = row_number()) %>% 
-  filter(seq != 1) %>% 
-  mutate(dupe = 1)
-
-
-######  Team order determined alphabetically #####
-
-
-ball_test3 <- ball_test %>% 
-  ungroup() %>% 
-  distinct(match_id, .keep_all = TRUE) %>% 
-  mutate(dupe = 1)
-
-
-
-ball_test2 <- ball_test %>% 
-  ungroup() %>% 
-  select(match_id, innings, ball_id) %>% 
-  mutate(dupe = 1)
-
-
-
-ball_join <- supp_ball %>% 
-  left_join(ball_test3, by = c("match_id" = "match_id",
-                               "innings" = "innings",
-                               "ball_id" = "ball_id")) %>% 
-  filter(!is.na(dupe)) %>% 
-  ungroup() %>% 
-  distinct(match_id)
 
 ###########################
 
@@ -769,25 +563,31 @@ supp_ball_transform <- supp_ball %>%
 
 test_innings <- bind_rows(innings_table, supp_ball_transform) 
 
+
+
 ###########################################################
 ### Match Table has new key, innings table does not #######
 ###########################################################
 
-test_query <- innings_table %>% 
+test_query <- test_innings %>% 
   filter(batsman == "DA Warner") %>% 
   summarise(sum = sum(as.numeric(runs_batsman), na.rm = TRUE),
             matches = n_distinct(match_id)) 
 
+########################################################
+##### Final Transform ##############################
+
+
 ### Write to Database #####
 
 
-conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test6.db")
+conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test7.db")
 
 dbWriteTable(conn, "matches_table", match_table_final, overwrite = TRUE)
 
 dbWriteTable(conn, "innings_table", test_innings, overwrite = TRUE)
 
-dbWriteTable(conn, "player_table", player_table2, overwrite = TRUE)
+dbWriteTable(conn, "player_table", base_player_table3, overwrite = TRUE)
 
 dbWriteTable(conn, "grounds_table", grounds_table, overwrite = TRUE)
 
@@ -797,213 +597,6 @@ dbWriteTable(conn, "teams_table", teams_table4, overwrite = TRUE)
 
 
 dbDisconnect(conn)
-
-conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test6.db")
-
-david_warner_query <- "select strftime('%Y', date(matches_table.dates_1)) as 'comp_year',
-batsman,
-sum(runs_batsman)
-
-from innings_table
-
- join matches_table on matches_table.match_id = innings_table.match_id
- 
-where batsman = 'DA Warner'
-and competition = 'IPL'
-
-
-
-group by strftime('%Y', date(matches_table.dates_1))
-
-"
-
-test_query_table <- dbGetQuery(conn, david_warner_query)
-
-dbDisconnect(conn)
-
-
-
-View(match_table_final)
-
-summary(match_table_final)
-
-query <- paste0("select player_table.player,
-strftime('%Y', date(dates_1)) as year,
- sum(innings_table.runs_batsman) as runs,
- sum(case 
-			when innings_table.wicket_player_out = innings_table.batsman then 1
-			
-			else 0
-			
-			end) as out,
-			
-			sum(innings_table.runs_batsman)/sum(case 
-			when innings_table.wicket_player_out = innings_table.batsman then 1
-			
-			else 0
-			
-			end) as average,
-			
-			count(innings_table.runs_batsman) as balls,
-			
-			round((sum(innings_table.runs_batsman)/count(innings_table.runs_batsman)), 3) as sr
-			
-			
-			
- 
- from player_table
- 
- JOIN innings_table on innings_table.batsman = player_table.player
- join matches_table on matches_table.match_id = innings_table.match_id
-
-where player_table.player = 'DA Warner' and matches_table.competition = 'IPL'
-
- 
- GROUP BY player_table.player,
- strftime('%Y', date(dates_1))
- ")
-
-
-query2 <- paste0("select player_table.player,
-strftime('%Y', date(dates_1)) as year,
- sum(innings_table.runs_batsman) as runs,
- sum(case 
-			when innings_table.wicket_player_out = innings_table.batsman then 1
-			
-			else 0
-			
-			end) as out,
-			
-			sum(innings_table.runs_batsman)/sum(case 
-			when innings_table.wicket_player_out = innings_table.batsman then 1
-			
-			else 0
-			
-			end) as average,
-			
-			count(innings_table.runs_batsman) as balls,
-			
-			round((sum(innings_table.runs_batsman)/count(innings_table.runs_batsman)), 3) as sr
-			
-			
-			
- 
- from player_table
- 
- JOIN innings_table on innings_table.batsman = player_table.player
- join matches_table on matches_table.match_id = innings_table.match_id
-
- Where
-matches_table.competition = 'IPL'
-and innings_table.innings = '1st'
-
- 
- GROUP BY player_table.player,
- strftime('%Y', date(dates_1))
- ")
-
-query3 <- paste0("select player_table.player,
-strftime('%Y', date(dates_1)) as year,
- sum(innings_table.runs_batsman) as runs,
- sum(case 
-			when innings_table.wicket_player_out = innings_table.batsman then 1
-			
-			else 0
-			
-			end) as out,
-			
-			sum(innings_table.runs_batsman)/sum(case 
-			when innings_table.wicket_player_out = innings_table.batsman then 1
-			
-			else 0
-			
-			end) as average,
-			
-			count(innings_table.runs_batsman) as balls,
-			
-			round((sum(innings_table.runs_batsman)/count(innings_table.runs_batsman)), 3) as sr
-			
-			
-			
- 
- from player_table
- 
- JOIN innings_table on innings_table.batsman = player_table.player
- join matches_table on matches_table.match_id = innings_table.match_id
-
- Where
-matches_table.competition = 'IPL'
-and cast(innings_table.over as real) > 15
-
- 
- GROUP BY player_table.player,
- strftime('%Y', date(dates_1))
- ")
-
-
-##### Query test ######
-
-conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test6.db")
-
-selecttest_table <- dbGetQuery(conn, query2)
-
-
-death <- dbGetQuery(conn, query3)
-
-dbDisconnect(conn)
-
-sr_test <- selecttest_table %>% 
-  mutate(SR = (runs/balls)*100,
-         average = runs/out) %>% 
-  filter(runs > 100)
-
-library(ggplot2)
-
-death2 <- death %>% 
-  mutate(SR = (runs/balls)*100,
-         average = runs/out) %>% 
-  filter(balls > 50)
-
-death_good <- death2 %>% 
-  filter(SR > 200 & average > 25)
-
-
-
-
-high2 <-sr_test %>% 
-  filter(average > 25 & SR > 160)
-
-bad2 <- sr_test %>% 
-  filter(average < 40 & SR < 100)
-
-
-test_sr <- ggplot(death2, aes(x = SR, y = average)) + 
-  geom_point() +
-  theme_bw()
-
-test_sr
-
-
-
-
-
-
-high <-sr_test %>% 
-  filter(average > 25 & SR > 160)
-
-bad <- sr_test %>% 
-  filter(average < 40 & SR < 100)
-
-
-########
-
-
-high <-sr_test %>% 
-  filter(average > 25 & SR > 160)
-
-bad <- sr_test %>% 
-  filter(average < 40 & SR < 100)
-
 
 
 
