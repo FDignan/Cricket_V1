@@ -574,6 +574,9 @@ test_query <- test_innings %>%
   summarise(sum = sum(as.numeric(runs_batsman), na.rm = TRUE),
             matches = n_distinct(match_id)) 
 
+test
+
+
 ########################################################
 ##### Final Transform ##############################
 
