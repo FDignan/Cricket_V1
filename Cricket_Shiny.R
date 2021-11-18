@@ -15,7 +15,7 @@ library(downloader)
 library(RSQLite)
 library(shiny)
 
-setwd("C:/Users/Dignanf/Documents/Cricket/")
+setwd("C:/Users/fdignan/OneDrive - Imperial College London/Temp/")
 
 death_query <- paste0("select player_table.player,
 strftime('%Y', date(dates_1)) as year,
@@ -116,7 +116,7 @@ and innings_table.innings in ('1st', '2nd')
 
 # query_test <- "select * from matches_table"
 
-conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test5.db")
+conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test6.db")
 
 all_table <- dbGetQuery(conn, all_query)
 
@@ -266,7 +266,7 @@ player_table.player,
 
 
 
-conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test5.db")
+conn <- dbConnect(RSQLite::SQLite(), "Cricket_Database_test6.db")
 
 match_up_table2 <- dbGetQuery(conn, match_up_query)
 

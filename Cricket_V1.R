@@ -570,7 +570,7 @@ test_innings <- bind_rows(innings_table, supp_ball_transform)
 ###########################################################
 
 test_query <- test_innings %>% 
-  filter(batsman == "DA Warner") %>% 
+  filter(batsman == "JM Bairstow") %>% 
   summarise(sum = sum(as.numeric(runs_batsman), na.rm = TRUE),
             matches = n_distinct(match_id)) 
 

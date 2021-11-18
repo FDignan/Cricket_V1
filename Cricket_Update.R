@@ -22,6 +22,25 @@ setwd("C:/Users/Dignanf/Documents/Cricket/")
 # test <- yaml.load_file("ipl_male/335982.yaml")
 
 
+# install.packages("downloader")
+
+setwd("C:/Users/finnd/OneDrive/Cricket - V3/")
+
+test <- yaml.load_file("ipl_male/335982.yaml")
+
+
+
+temp <- tempfile()
+
+
+wd <- getwd()
+
+download.file("https://cricsheet.org/downloads/recently_added_7_male.zip", temp)
+
+unzip(temp, exdir = paste0(wd, "/test"))
+
+unlink(temp)
+
 
 temp <- tempfile()
 
